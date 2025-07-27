@@ -2,14 +2,14 @@ import type {AutovalidatorAction, AutovalidatorRule} from '@/models/Autovalidato
 
 import {apiClient} from '../ApiClient'
 
-type QueryParamsAutovalidatorRule = {
+export type QueryParamsAutovalidatorRule = {
   search?: string
-  action_choices?: AutovalidatorAction
+  action_choices?: `${ AutovalidatorAction }`
 }
 
 export default {
   get(params: QueryParamsAutovalidatorRule = {}) {
-    return apiClient.get<AutovalidatorRule[]>('/auto-validator/rules/', {params})
+    return apiClient.get<PaginatedResponse<AutovalidatorRule>>('/auto-validator/rules/', {params})
   },
 
   create(payload: AutovalidatorRule, config?: RequestConfig) {

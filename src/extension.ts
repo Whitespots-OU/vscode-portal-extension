@@ -1,9 +1,9 @@
 import {type ExtensionContext, Uri, commands, window, workspace} from 'vscode'
 
-import AutovalidatorApi from './api/modules/AutovalidatorApi'
+import AutovalidatorApi, {type QueryParamsAutovalidatorRule} from './api/modules/AutovalidatorApi'
 import FindingApi from './api/modules/FindingApi'
 import {AutovalidatorAction} from './models/Autovalidator'
-import {parseSettingsSetup, setupSettings} from './models/Settings'
+import {getPortalUrl, parseSettingsSetup, setupSettings} from './models/Settings'
 import {TriageStatus} from './models/TriageStatus'
 import {CommandName, SETTINGS_KEY} from './package'
 import {checkFindings} from './providers/CheckFindings'
@@ -93,17 +93,22 @@ export function activate(context: ExtensionContext) {
       return
     }
 
+    const queryParams: QueryParamsAutovalidatorRule = {action_choices: `${ AutovalidatorAction.REJECT }`, search: `"${ finding.name }" "${ finding.file_path }"`}
+
     const rules = await AutovalidatorApi
-      .get({action_choices: AutovalidatorAction.REJECT, search: `"${ finding.name }" "${ finding.file_path }"`})
+      .get(queryParams)
       .catch(() => {
         const message = 'Failed to check validator rules'
         outputChannel.appendLine(message)
         window.showErrorMessage(message)
       })
 
-    if (!rules) return
+    if (!rules) {
+      outputChannel.appendLine('Failed to get validator rules list')
+      return
+    }
 
-    const filtered = rules.data.filter(item =>
+    const filtered = rules.data.results.filter(item =>
       item.instructions[0]?.field === 'Finding__name' &&
         item.instructions[0]?.value === finding.name && 
         item.instructions[1]?.field === 'Finding__file_path' &&
@@ -111,9 +116,13 @@ export function activate(context: ExtensionContext) {
     )
 
     if (filtered.length !== 0) {
+      const rulesLink = `${ getPortalUrl() }/autovalidator?${ new URLSearchParams(queryParams).toString() }`
+
       const message = `Found ${ filtered.length } rule${ filtered.length === 1 ? '' : 's' } for this finding`
       outputChannel.appendLine(message)
-      window.showErrorMessage(message)
+      window.showErrorMessage(message, 'View Rules').then(selection => {
+        if (selection === 'View Rules') commands.executeCommand('vscode.open', Uri.parse(rulesLink))
+      })
 
       return
     }
@@ -152,8 +161,12 @@ export function activate(context: ExtensionContext) {
         affected_products_cluster: null,
         read_only: false,
       })
-      .then(() => {
-        window.showInformationMessage(`Created rule to reject findings ${ title }`)
+      .then(response => {
+        const url = Uri.parse(`${ getPortalUrl() }/autovalidator/rule/${ response.data.id }`)
+
+        window.showInformationMessage(`Created rule to reject findings ${ title }`, 'View Rule').then(selection => {
+          if (selection === 'View Rule') commands.executeCommand('vscode.open', url)
+        })
 
         const length = WorkspaceState.findingList.length
 
