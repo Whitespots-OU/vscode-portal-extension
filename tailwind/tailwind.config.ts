@@ -20,6 +20,12 @@ export default {
   theme: {
     extend: {
       ...sizes,
+      colors: {
+        'default-dark': 'var(--vscode-editorWidget-background)',
+
+        primary: 'var(--vscode-focusBorder)',
+        'primary-dark': 'var(--vscode-focusBorder)',
+      },
     },
   },
 } satisfies Config
