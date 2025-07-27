@@ -13,6 +13,7 @@ export enum CommandName {
   CHECK_FINDINGS = `${ SETTINGS_KEY }.checkVulnerabilities`,
   CONFIGURE = `${ SETTINGS_KEY }.configure`,
   REJECT_FINDING = `${ SETTINGS_KEY }.rejectFinding`,
+  REJECT_FINDING_FOREVER = `${ SETTINGS_KEY }.foreverRejectFinding`,
   SETUP = `${ SETTINGS_KEY }.setup`,
 }
 
@@ -78,6 +79,10 @@ export default {
       {
         command: CommandName.REJECT_FINDING,
         title: 'Reject Finding',
+      },
+      {
+        command: CommandName.REJECT_FINDING_FOREVER,
+        title: 'Reject Finding Forever',
       },
       {
         command: CommandName.SETUP,
