@@ -1,9 +1,9 @@
 import {type DecorationOptions, DecorationRangeBehavior, window, workspace} from 'vscode'
 
-import {getFindingHoverMessage} from '@/models/Finding'
 import {getSettings} from '@/models/Settings'
 import {Severity, severityList} from '@/models/Severity'
 import {severityDecorationMap} from '@/models/SeverityDecoration'
+import {getFindingHoverMessage} from '@/utils/FindingMessage'
 import {outputChannel} from '@/utils/OutputChannel'
 import severityColors from '@/utils/severity'
 

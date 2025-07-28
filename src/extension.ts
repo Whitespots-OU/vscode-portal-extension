@@ -181,6 +181,8 @@ export function activate(context: ExtensionContext) {
 
           applyDecorationsFinding()
         }
+
+        commands.executeCommand(CommandName.REJECT_FINDING, findingId)
       })
       .catch(() => {
         const message = `Failed to forever reject findings ${ title }`
