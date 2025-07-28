@@ -6,6 +6,7 @@
     "src/models/**/*.ts",
     "src/extension/**/*.d.ts",
     "src/extension/**/*.ts",
+    "src/extension/assets/**/*",
     "assets/**/*"
   ],
   "compilerOptions": {

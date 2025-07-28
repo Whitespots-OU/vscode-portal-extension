@@ -8,6 +8,8 @@ import {join} from 'path'
 
 import {severityEmojiMap, severityTitleMap} from '@/models/Severity'
 import {TriageStatus, triageStatusTitleMap} from '@/models/TriageStatus'
+import ButtonReject from '@ext/assets/ButtonReject.svg'
+import ButtonRejectForever from '@ext/assets/ButtonRejectForever.svg'
 import {getPortalUrl} from '@ext/models/Settings'
 import {CommandName} from '@ext/package'
 
@@ -38,17 +40,26 @@ const findingFieldGetterMap = {
   date_verified: value => value.date_verified ? dateFormat(new Date(value.date_verified)) : 'N / A',
 } as const satisfies Partial<Record<keyof Finding, (value: Finding) => string>>
 
-export const getFindingHoverMessage = (value: FindingExtended, outdated: boolean, prefix: string = '') => {
+export const getFindingHoverMessage = (value: Finding, outdated: boolean, prefix: string = '') => {
   const hoverMessage = new MarkdownString()
 
   const url = `[${ value.id }](${ getPortalUrl() }/products/${ value.product }/findings/${ value.id })`
 
   hoverMessage.appendMarkdown(`## ${ prefix }${ url }: ${ severityEmojiMap[value.severity] } ${ severityTitleMap[value.severity] } - ${ value.name }${ outdated ? ' (possibly outdated)' : '' }\n\n`)
 
+  const buttons: string[] = []
+
   if (value.current_sla_level !== TriageStatus.REJECTED) {
-    const rejectUri = `command:${ CommandName.REJECT_FINDING }?${ encodeURIComponent(JSON.stringify(value.id)) }`
-    hoverMessage.appendMarkdown(`[Reject this finding](${ rejectUri })\n\n`)
+    const commandUriReject = `command:${ CommandName.REJECT_FINDING }?${ encodeURIComponent(JSON.stringify(value.id)) }`
+    buttons.push(`[![Reject finding](${ ButtonReject })](${ commandUriReject } "Reject this finding")`)
   }
+
+  if (value.file_path) {
+    const commandUriRejectForever = `command:${ CommandName.REJECT_FINDING_FOREVER }?${ encodeURIComponent(JSON.stringify(value.id)) }`
+    buttons.push(`[![Reject finding forever](${ ButtonRejectForever })](${ commandUriRejectForever } "Reject all findings with this name and file path")`)
+  }
+
+  hoverMessage.appendMarkdown(`${ buttons.join('  ') }\n\n`)
 
   hoverMessage.isTrusted = true
 
