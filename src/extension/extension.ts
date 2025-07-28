@@ -13,6 +13,7 @@ import {setContext} from '@ext/utils/Context'
 import {getGitEmail} from '@ext/utils/GitConfig'
 import {outputChannel} from '@ext/utils/OutputChannel'
 
+import {commandRejectFindingForever} from './commands/RejectFindingForever'
 import {addSuggestedProvider} from './providers/SuggestedProvider'
 import {WebviewProvider} from './providers/WebviewProvider'
 
@@ -65,6 +66,8 @@ export function activate(context: ExtensionContext) {
         })
     }),
   )
+
+  context.subscriptions.push(commandRejectFindingForever())
 
   context.subscriptions.push(
     window.registerUriHandler({
