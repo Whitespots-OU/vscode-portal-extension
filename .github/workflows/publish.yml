@@ -29,5 +29,4 @@ jobs:
       
       - name: Publish to Open VSX
         working-directory: ./extension
-        run: npx ovsx login Whitespots --pat ${{ secrets.OPEN_VSX_TOKEN }}
-        run: npx ovsx publish
+        run: npx ovsx login Whitespots --pat ${{ secrets.OPEN_VSX_TOKEN }} && npx ovsx publish
