@@ -23,6 +23,11 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Publish VS Code Extension
+      - name: Publish to VS Code marketplace
         working-directory: ./extension
         run: npx vsce publish --pat ${{ secrets.VSCE_PAT }}
+      
+      - name: Publish to Open VSX
+        working-directory: ./extension
+        run: npx ovsx login Whitespots --pat ${{ secrets.OPEN_VSX_TOKEN }}
+        run: npx ovsx publish
