@@ -4,8 +4,10 @@
       {{ value }}
     </pre>
 
-    123ывс
-    <WInput />
+    <WInput
+      v-model="value"
+      title="Input"
+    />
 
     <WTabs>
       <WTabsItem
@@ -34,6 +36,6 @@ import WTabsItem from 'eco-vue-js/dist/components/Tabs/WTabsItem.vue'
 const value = ref('')
 
 onMounted(() => {
-  
+  value.value = 'Test'
 })
 </script>

@@ -8,7 +8,7 @@
       "type": "npm",
       "script": "dev:extension", // "build",
       "group": "build",
-      "problemMatcher": "$vite",
+      "problemMatcher": "$tsc-watch",
       "isBackground": true,
       "presentation": {
         "group": "build",
