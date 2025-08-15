@@ -26,7 +26,9 @@ jobs:
       - name: Publish to VS Code marketplace
         working-directory: ./extension
         run: npx vsce publish --pat ${{ secrets.VSCE_PAT }}
-      
+        continue-on-error: true
+
       - name: Publish to Open VSX
         working-directory: ./extension
-        run: npx ovsx login Whitespots --pat ${{ secrets.OPEN_VSX_TOKEN }} && npx ovsx publish
+        run: npx ovsx publish --pat ${{ secrets.OPEN_VSX_TOKEN }}
+        continue-on-error: true
