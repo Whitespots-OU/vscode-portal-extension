@@ -1,12 +1,10 @@
 {
   "include": [
-    "src/types/ui-kit.d.ts",
     "env.d.ts",
-    "src/types/global.d.ts",
-    "src/models/**/*.ts",
-    "src/extension/**/*.d.ts",
-    "src/extension/**/*.ts",
-    "src/extension/assets/**/*",
+    "src/models/**/*",
+    "src/types/**/*",
+    "src/utils/**/*",
+    "src/extension/**/*",
     "assets/**/*"
   ],
   "compilerOptions": {

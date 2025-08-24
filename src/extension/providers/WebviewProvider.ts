@@ -3,6 +3,8 @@ import {Uri, type WebviewView, type WebviewViewProvider} from 'vscode'
 import {context} from '@ext/utils/Context'
 
 import {outputChannel} from '../utils/OutputChannel'
+import {type WebviewAPI, type WebviewAPIRequest} from '../webviewApi/types'
+import {webviewApi} from '../webviewApi/webviewApi'
 
 export class WebviewProvider implements WebviewViewProvider {
   constructor() {}
@@ -19,6 +21,15 @@ export class WebviewProvider implements WebviewViewProvider {
       enableForms: true,
       enableSandbox: false, 
     } as typeof webview.options
+
+    webview.onDidReceiveMessage(<T extends keyof WebviewAPI>(event: WebviewAPIRequest<T>) => {
+      const response = webviewApi[event.command](event.data)
+
+      outputChannel.appendLine(`Webview sent a message: ${ JSON.stringify(event) }`)
+      outputChannel.appendLine(`Response: ${ JSON.stringify(response) }`)
+
+      webview.postMessage({...event, response})
+    })
 
     const scriptUri = webview.asWebviewUri(Uri.joinPath(context.extensionUri, 'webview', 'main.js'))
     const styleUri = webview.asWebviewUri(Uri.joinPath(context.extensionUri, 'webview/assets', 'main.css'))

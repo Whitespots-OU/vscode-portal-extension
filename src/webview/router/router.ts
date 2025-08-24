@@ -11,13 +11,13 @@ export const routes = [
     children: [
       {
         path: 'chat-list/:chatId?',
-        children: [
-          {
-            path: '',
-            name: RouteName.CHAT_LIST,
-            component: () => import('@web/views/Chat/ChatListView.vue'),
-          },
-        ],
+        name: RouteName.CHAT_LIST,
+        component: () => import('@web/views/Chat/ChatListView.vue'),
+      },
+      {
+        path: 'unauthorized',
+        name: RouteName.UNAUTHORIZED,
+        component: () => import('@web/views/Unathorized/UnathorizedView.vue'),
       },
     ],
   },

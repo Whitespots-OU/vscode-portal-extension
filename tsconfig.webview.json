@@ -2,10 +2,11 @@
   "extends": "@vue/tsconfig/tsconfig.dom.json",
   "include": [
     "env.d.ts",
-    "src/webview/env.d.ts",
-    "src/webview/**/*.d.ts",
-    "src/webview/**/*.ts",
-    "src/webview/**/*.vue"
+    "src/models/**/*",
+    "src/types/**/*",
+    "src/utils/**/*",
+    "src/webview/**/*",
+    "src/extension/webviewApi/types.ts"
   ],
   "compilerOptions": {
     "composite": true,

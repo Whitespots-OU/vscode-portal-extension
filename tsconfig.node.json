@@ -8,7 +8,7 @@
     "nightwatch.conf.*",
     "playwright.config.*",
     "build/**/*.ts",
-    "src/models/**/*.ts",
+    "src/models/**/*",
     "env-node.d.ts",
     "src/package.ts",
     "tailwind/**/*"
