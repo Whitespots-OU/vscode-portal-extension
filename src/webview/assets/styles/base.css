@@ -45,6 +45,7 @@
       w-list-header-h-10 w-list-header-rounded-xl w-list-padding-3
       w-button-h-8 w-button-rounded-xl
       w-modal-confirm-w-[32rem]
+      w-input-bg-default dark:w-input-bg-default-dark
       text-sm
       md:[--actions-bar-width:theme(width.actions-bar-width)]
       xl:[--nav-bar-width:theme(width.nav-bar-width)]
