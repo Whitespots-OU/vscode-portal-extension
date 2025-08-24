@@ -25,7 +25,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "eco-vue-js": "0.10.68",
+    "eco-vue-js": "0.10.99",
     "vue": "3.5.16"
   },
   "devDependencies": {
