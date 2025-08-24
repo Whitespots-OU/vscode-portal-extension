@@ -2,10 +2,6 @@ import type {AssetField} from './Asset'
 import type {CVSSVectorWithScore} from './CVSS'
 import type {ProductLite} from './Product'
 
-import {workspace} from 'vscode'
-
-import {join} from 'path'
-
 import {type Severity} from './Severity'
 import {TriageStatus} from './TriageStatus'
 
@@ -105,9 +101,3 @@ export type Finding = {
 
   cwe_set: number[]
 } & FindingJira & Record<AssetField, string> & FindingExtend
-
-export const getFindingAbsolutePath = (value: Finding): string | null => {
-  if (!workspace.workspaceFolders || value.file_path === null) return null
-
-  return join(workspace.workspaceFolders[0].uri.fsPath, value.file_path)
-}
