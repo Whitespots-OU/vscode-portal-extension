@@ -23,7 +23,7 @@ const createApiClient = async () => {
   const finalUrl = baseUrl ? (baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl) : ''
 
   await tokenRefresh()
-  
+
   return new ApiClientInstance({
     routeNameAuth: RouteName.CHAT_LIST,
     routeNameAuthNo: RouteName.UNAUTHORIZED,
