@@ -9,7 +9,7 @@ import {CommandName, SETTINGS_KEY} from './package'
 import {checkFindings} from './providers/CheckFindings'
 import {applyDecorationsFinding} from './providers/DecorationsFinding'
 import {treeDataProviderFinding} from './providers/TreeDataProviderFinding'
-import {ScanSelection, installPreCommitHook, scanLocally} from './runner/LocalScan'
+import {ScanSelection, installPreCommitHook, scanLocally, showRunnerLog} from './runner/LocalScan'
 import {setContext} from './utils/Context'
 import {getGitEmail} from './utils/GitConfig'
 import {outputChannel} from './utils/OutputChannel'
@@ -45,6 +45,8 @@ export function activate(context: ExtensionContext) {
   commands.registerCommand(CommandName.SCAN_STAGED, () => scanLocally(ScanSelection.STAGED))
 
   commands.registerCommand(CommandName.INSTALL_HOOK, installPreCommitHook)
+
+  commands.registerCommand(CommandName.SHOW_RUNNER_LOG, showRunnerLog)
 
   commands.registerCommand(CommandName.REJECT_FINDING, async (findingId: number) => {
     outputChannel.appendLine(`Reject finding ${ findingId }`)

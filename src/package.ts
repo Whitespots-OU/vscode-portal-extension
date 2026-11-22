@@ -18,6 +18,7 @@ export enum CommandName {
   SCAN_CHANGES = `${ SETTINGS_KEY }.scanChanges`,
   SCAN_STAGED = `${ SETTINGS_KEY }.scanStaged`,
   INSTALL_HOOK = `${ SETTINGS_KEY }.installHook`,
+  SHOW_RUNNER_LOG = `${ SETTINGS_KEY }.showRunnerLog`,
 }
 
 export enum ViewName {
@@ -105,6 +106,11 @@ export default {
       {
         command: CommandName.INSTALL_HOOK,
         title: 'Install pre-commit hook',
+        category: SETTINGS_KEY_CAP,
+      },
+      {
+        command: CommandName.SHOW_RUNNER_LOG,
+        title: 'Show local scan log',
         category: SETTINGS_KEY_CAP,
       },
     ],

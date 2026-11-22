@@ -8,7 +8,7 @@ import {CommandName} from '@/package'
 import {outputChannel} from '@/utils/OutputChannel'
 
 import {addFindingDiagnostics, localScanDiagnostics} from './LocalScanDiagnostics'
-import {addLocalScanFindings, finishLocalScan, setLocalScanJob, startLocalScan} from './LocalScanResults'
+import {addLocalScanFindings, finishLocalScan, finishLocalScanJob, setLocalScanJobs, setLocalScanStep, startLocalScan, startLocalScanJob} from './LocalScanResults'
 import {RUNNER_PROTOCOL, type RunnerEvent, parseRunnerEvent} from './RunnerEvents'
 import {ensureRunner} from './RunnerInstaller'
 
@@ -56,28 +56,32 @@ const handleEvent = (folder: WorkspaceFolder, event: RunnerEvent, result: ScanRe
       if (event.protocol !== RUNNER_PROTOCOL) runnerLog.appendLine(`Unexpected runner protocol ${ event.protocol }`)
       runnerLog.appendLine(`${ event.name } · ${ event.product } (${ event.repository }): ${ event.jobs.length } jobs, ${ event.changed_files } changed files`)
       event.skipped.forEach(item => runnerLog.appendLine(`skip ${ item.job }: ${ item.reason }`))
+      setLocalScanJobs(event.jobs.length)
       break
     case 'image_pull':
       progress.report({message: `pulling ${ event.image }`})
+      setLocalScanStep(`pulling ${ event.image }`)
       break
     case 'job_started':
       progress.report({message: event.job})
       showStatus(`$(sync~spin) ${ event.job }`, 'auditor-cli is scanning')
-      setLocalScanJob(event.job)
+      startLocalScanJob(event.job)
       runnerLog.appendLine(`▶ ${ event.job }`)
       break
     case 'job_finished':
       runnerLog.appendLine(`${ event.job } ${ event.status } in ${ Math.round(event.seconds ?? 0) }s`)
+      finishLocalScanJob(event.job)
       break
     case 'log':
       runnerLog.appendLine(`[${ event.job }] ${ event.line }`)
       break
     case 'report':
       progress.report({message: `checking ${ event.scan_type }`})
+      setLocalScanStep(`checking ${ event.scan_type }`)
       break
     case 'findings':
-      addFindingDiagnostics(folder.uri, event.scan_type, event.findings)
-      addLocalScanFindings(event.scan_type, event.findings)
+      addFindingDiagnostics(folder.uri, event.scan_type, event.findings ?? [])
+      addLocalScanFindings(event.scan_type, event.findings ?? [])
       runnerLog.appendLine(`check ${ event.scan_type }: ${ JSON.stringify(event.counts) }, ${ event.blocking } blocking`)
       break
     case 'warning':
@@ -143,6 +147,8 @@ const reportResult = (result: ScanResult) => {
     })
 }
 
+export const showRunnerLog = () => runnerLog.show()
+
 let running = false
 
 export const scanLocally = async (selection: ScanSelection) => {
@@ -164,11 +170,11 @@ export const scanLocally = async (selection: ScanSelection) => {
     {location: ProgressLocation.Notification, title: selection === ScanSelection.STAGED ? 'Scanning staged changes' : 'Scanning changes', cancellable: true},
     async (progress, token) => {
       progress.report({message: 'preparing auditor-cli'})
+      localScanDiagnostics.clear()
+      startLocalScan(folder.uri)
 
       const runner = await ensureRunner()
 
-      localScanDiagnostics.clear()
-      startLocalScan(folder.uri)
       runnerLog.appendLine(`$ ${ runner } run --json${ selection === ScanSelection.STAGED ? ' --staged' : '' }`)
 
       reportResult(await runScan(runner, folder, selection, progress, token))

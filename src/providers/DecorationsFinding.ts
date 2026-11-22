@@ -1,9 +1,11 @@
-import {type DecorationOptions, DecorationRangeBehavior, window, workspace} from 'vscode'
+import {type DecorationOptions, DecorationRangeBehavior, MarkdownString, type TextEditor, window, workspace} from 'vscode'
 
+import {type Finding} from '@/models/Finding'
 import {getSettings} from '@/models/Settings'
 import {Severity, severityList} from '@/models/Severity'
 import {severityDecorationMap} from '@/models/SeverityDecoration'
-import {getFindingHoverMessage} from '@/utils/FindingMessage'
+import {type LocalScanFinding, localFindingsInFile, onDidChangeLocalScan} from '@/runner/LocalScanResults'
+import {getFindingHoverMessage, getLocalFindingHoverMessage} from '@/utils/FindingMessage'
 import {outputChannel} from '@/utils/OutputChannel'
 import severityColors from '@/utils/severity'
 
@@ -41,71 +43,90 @@ const resetDecorations = () => {
   })
 }
 
+type LineEntry = {
+  severity: Severity
+  outdated: boolean
+  message: (prefix: string) => MarkdownString
+}
+
+const compareEntries = (a: LineEntry, b: LineEntry): number => b.severity - a.severity
+
+const portalEntries = (findings: Finding[], editor: TextEditor, merged: Set<number>): Map<number, LineEntry[]> => {
+  const result = new Map<number, LineEntry[]>()
+
+  for (const finding of findings) {
+    if (finding.line === null || merged.has(finding.id) || finding.line > editor.document.lineCount) continue
+
+    const outdated = editor.document.lineAt(finding.line - 1).text !== finding.line_text
+
+    result.set(finding.line, [...result.get(finding.line) ?? [], {
+      severity: finding.severity,
+      outdated,
+      message: prefix => getFindingHoverMessage(finding, outdated, prefix),
+    }])
+  }
+
+  return result
+}
+
+const addLocalEntries = (result: Map<number, LineEntry[]>, findings: LocalScanFinding[], portalFindings: Finding[], editor: TextEditor) => {
+  for (const finding of findings) {
+    if (finding.line === null || finding.line > editor.document.lineCount) continue
+
+    const portalFinding = portalFindings.find(item => item.id === finding.finding_id)
+
+    result.set(finding.line, [...result.get(finding.line) ?? [], {
+      severity: finding.severityLevel,
+      outdated: false,
+      message: prefix => getLocalFindingHoverMessage(finding, portalFinding, prefix),
+    }])
+  }
+}
+
+const emptyBySeverity = (): Record<Severity, DecorationOptions[]> => ({
+  [Severity.INFO]: [],
+  [Severity.LOW]: [],
+  [Severity.MEDIUM]: [],
+  [Severity.HIGH]: [],
+  [Severity.CRITICAL]: [],
+})
+
 export const applyDecorationsFinding = () => {
   const editor = window.activeTextEditor
 
   if (!editor) return
 
   const path = workspace.asRelativePath(editor.document.uri, false)
+  const portalFindings = treeDataProviderFinding.groupList[path] ?? []
+  const localFindings = localFindingsInFile(path)
 
-  const findingList = treeDataProviderFinding.groupList[path]
-
-  const settings = getSettings()
-
-  if (!settings.personalization.highlight || !findingList?.length) {
+  if (!getSettings().personalization.highlight || (!portalFindings.length && !localFindings.length)) {
     resetDecorations()
     return
   }
 
-  const decorationsBySeverity: Record<Severity, DecorationOptions[]> = {
-    [Severity.INFO]: [],
-    [Severity.LOW]: [],
-    [Severity.MEDIUM]: [],
-    [Severity.HIGH]: [],
-    [Severity.CRITICAL]: [],
-  }
+  const entries = portalEntries(portalFindings, editor, new Set(localFindings.flatMap(item => item.finding_id ?? [])))
 
-  const changedDecorationsBySeverity: Record<Severity, DecorationOptions[]> = {
-    [Severity.INFO]: [],
-    [Severity.LOW]: [],
-    [Severity.MEDIUM]: [],
-    [Severity.HIGH]: [],
-    [Severity.CRITICAL]: [],
-  }
+  addLocalEntries(entries, localFindings, portalFindings, editor)
 
-  const lines = findingList.map(item => item.line).filter((item, index, array): item is number => array.indexOf(item) === index && item !== null)
+  const decorationsBySeverity = emptyBySeverity()
+  const changedDecorationsBySeverity = emptyBySeverity()
 
-  lines.forEach(line => {
-    const findings = findingList
-      .filter(item => item.line === line)
-      .sort((a, b) => a.name > b.name ? 1 : a.name < b.name ? -1 : 0)
-      .sort((a, b) => a.severity < b.severity ? 1 : a.severity > b.severity ? -1 : 0)
+  for (const [line, list] of entries) {
+    const sorted = list.sort(compareEntries)
+    const message = new MarkdownString()
 
-    if (!findings.length) return
+    message.isTrusted = true
 
-    const finding = findings.splice(0, 1)[0]
-
-    if (finding.line === null) return
-
-    const lineAt = editor.document.lineAt(finding.line - 1)
-
-    const outdated = lineAt.text !== finding.line_text
-
-    const message = getFindingHoverMessage(finding, outdated, findings.length ? `(1 / ${ findings.length + 1 }) ` : undefined)
-
-    findings.forEach((item, index) => {
-      message.appendMarkdown('\n\n---\n\n')
-
-      message.appendMarkdown(getFindingHoverMessage(item, lineAt.text !== item.line_text, `(${ index + 2 } / ${ findings.length + 1 }) `).value)
+    sorted.forEach((entry, index) => {
+      if (index) message.appendMarkdown('\n\n---\n\n')
+      message.appendMarkdown(entry.message(sorted.length > 1 ? `(${ index + 1 } / ${ sorted.length }) ` : '').value)
     })
 
-    const target = outdated ? changedDecorationsBySeverity : decorationsBySeverity
+    const target = sorted[0].outdated ? changedDecorationsBySeverity : decorationsBySeverity
 
-    target[finding.severity].push({
-      range: lineAt.range,
-      hoverMessage: message,
-    })
-  })
+    target[sorted[0].severity].push({range: editor.document.lineAt(line - 1).range, hoverMessage: message})
+  }
 
   outputChannel.appendLine(`Applying finding decorations for file ${ path }`)
 
@@ -114,3 +135,5 @@ export const applyDecorationsFinding = () => {
     editor.setDecorations(changedLineDecorationMap[severity], changedDecorationsBySeverity[severity])
   })
 }
+
+onDidChangeLocalScan(applyDecorationsFinding)

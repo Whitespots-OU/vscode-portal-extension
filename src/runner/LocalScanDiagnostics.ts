@@ -6,13 +6,6 @@ const SOURCE = 'auditor-cli'
 
 export const localScanDiagnostics = languages.createDiagnosticCollection(SOURCE)
 
-const diagnosticSeverity = (finding: RunnerFinding): DiagnosticSeverity => {
-  if (finding.blocking) return DiagnosticSeverity.Error
-  if (finding.verdict === 'known') return DiagnosticSeverity.Information
-
-  return DiagnosticSeverity.Warning
-}
-
 const findingRange = (finding: RunnerFinding): Range => {
   const line = Math.max((finding.line ?? 1) - 1, 0)
 
@@ -23,7 +16,7 @@ const toDiagnostic = (finding: RunnerFinding, scanType: string): Diagnostic => {
   const diagnostic = new Diagnostic(
     findingRange(finding),
     `${ finding.name } [${ finding.severity }, ${ verdictTitle(finding) }]`,
-    diagnosticSeverity(finding),
+    DiagnosticSeverity.Error,
   )
 
   diagnostic.source = `${ SOURCE } · ${ scanType }`
@@ -35,7 +28,7 @@ export const addFindingDiagnostics = (root: Uri, scanType: string, findings: Run
   const byFile = new Map<string, Diagnostic[]>()
 
   for (const finding of findings) {
-    if (!finding.file_path || !isFindingShown(finding)) continue
+    if (!finding.file_path || !finding.blocking || !isFindingShown(finding)) continue
 
     const uri = Uri.joinPath(root, finding.file_path).toString()
 
