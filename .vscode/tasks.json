@@ -7,12 +7,11 @@
       "type": "npm",
       "script": "build",
       "group": "build",
-      "problemMatcher": "$vite",
-      "isBackground": true,
+      "problemMatcher": [],
       "label": "npm: build",
       "presentation": {
         "group": "build",
-        "reveal": "never"
+        "reveal": "silent"
       }
     }
   ]

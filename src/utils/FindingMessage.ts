@@ -1,4 +1,5 @@
 import type {Finding} from '@/models/Finding'
+import type {LocalScanFinding} from '@/runner/LocalScanResults'
 
 import {MarkdownString} from 'vscode'
 
@@ -8,6 +9,7 @@ import {getPortalUrl} from '@/models/Settings'
 import {severityEmojiMap, severityTitleMap} from '@/models/Severity'
 import {TriageStatus, triageStatusTitleMap} from '@/models/TriageStatus'
 import {CommandName} from '@/package'
+import {verdictTitle} from '@/runner/RunnerEvents'
 
 import ButtonReject from '../../assets/ButtonReject.svg'
 import ButtonRejectForever from '../../assets/ButtonRejectForever.svg'
@@ -70,6 +72,35 @@ export const getFindingHoverMessage = (value: Finding, outdated: boolean, prefix
   findingFieldDetailList.forEach((field, index, array) => {
     hoverMessage.appendMarkdown(findingFieldTitleMap[field] + ': ' + findingFieldGetterMap[field](value) + (index < array.length - 1 ? '\n\n' : ''))
   })
+
+  return hoverMessage
+}
+const verdictLine = (value: LocalScanFinding): string => {
+  const verdict = verdictTitle(value)
+
+  if (value.finding_id === null) return verdict
+
+  return `${ verdict } · [portal finding ${ value.finding_id }](${ getPortalUrl() }/findings/${ value.finding_id })`
+}
+
+export const getLocalFindingHoverMessage = (value: LocalScanFinding, portalFinding: Finding | undefined, prefix: string = '') => {
+  const hoverMessage = new MarkdownString()
+
+  hoverMessage.isTrusted = true
+
+  hoverMessage.appendMarkdown(`## ${ prefix }${ severityEmojiMap[value.severityLevel] } ${ severityTitleMap[value.severityLevel] } - ${ value.name }\n\n`)
+  hoverMessage.appendMarkdown(`${ value.blocking ? '**Blocking** · ' : '' }In your changes · ${ value.scanType }\n\n`)
+  hoverMessage.appendMarkdown(`${ verdictLine(value) }\n\n`)
+
+  if (value.dependency) hoverMessage.appendMarkdown(`Dependency: \`${ value.dependency }\`\n\n`)
+
+  if (portalFinding) {
+    hoverMessage.appendMarkdown('---\n\n')
+    hoverMessage.appendMarkdown(getFindingHoverMessage(portalFinding, false).value)
+  } else if (value.description) {
+    hoverMessage.appendMarkdown('---\n\n')
+    hoverMessage.appendMarkdown(value.description)
+  }
 
   return hoverMessage
 }

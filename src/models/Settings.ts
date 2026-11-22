@@ -18,6 +18,9 @@ export type Settings = {
     triageStatuses: TriageStatusTitle[]
     severity: SeverityTitleEmoji[]
   }
+  runner: {
+    path: string
+  }
 }
 
 export interface SettingsMessage extends Settings {
