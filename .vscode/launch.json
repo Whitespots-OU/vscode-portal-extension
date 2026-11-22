@@ -12,6 +12,7 @@
       "runtimeExecutable": "${execPath}",
       "args": ["--extensionDevelopmentPath=${workspaceFolder}/extension"],
       "outFiles": ["${workspaceFolder}/extension/*.cjs"],
+      "experimentalNetworking": "off",
       "preLaunchTask": "npm: build"
     }
   ]
