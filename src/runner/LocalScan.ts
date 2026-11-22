@@ -8,6 +8,7 @@ import {CommandName} from '@/package'
 import {outputChannel} from '@/utils/OutputChannel'
 
 import {addFindingDiagnostics, localScanDiagnostics} from './LocalScanDiagnostics'
+import {addLocalScanFindings, finishLocalScan, setLocalScanJob, startLocalScan} from './LocalScanResults'
 import {RUNNER_PROTOCOL, type RunnerEvent, parseRunnerEvent} from './RunnerEvents'
 import {ensureRunner} from './RunnerInstaller'
 
@@ -62,6 +63,7 @@ const handleEvent = (folder: WorkspaceFolder, event: RunnerEvent, result: ScanRe
     case 'job_started':
       progress.report({message: event.job})
       showStatus(`$(sync~spin) ${ event.job }`, 'auditor-cli is scanning')
+      setLocalScanJob(event.job)
       runnerLog.appendLine(`▶ ${ event.job }`)
       break
     case 'job_finished':
@@ -75,6 +77,7 @@ const handleEvent = (folder: WorkspaceFolder, event: RunnerEvent, result: ScanRe
       break
     case 'findings':
       addFindingDiagnostics(folder.uri, event.scan_type, event.findings)
+      addLocalScanFindings(event.scan_type, event.findings)
       runnerLog.appendLine(`check ${ event.scan_type }: ${ JSON.stringify(event.counts) }, ${ event.blocking } blocking`)
       break
     case 'warning':
@@ -117,6 +120,8 @@ const runScan = (runner: string, folder: WorkspaceFolder, selection: ScanSelecti
 }
 
 const reportResult = (result: ScanResult) => {
+  finishLocalScan(result.exitCode === 0 || result.exitCode === EXIT_BLOCKING ? undefined : result.errors.at(-1) ?? `auditor-cli exited with ${ result.exitCode }`)
+
   if (result.exitCode === 0) {
     showStatus('$(shield) clean', 'auditor-cli: no blocking findings in your changes')
     return
@@ -163,6 +168,7 @@ export const scanLocally = async (selection: ScanSelection) => {
       const runner = await ensureRunner()
 
       localScanDiagnostics.clear()
+      startLocalScan(folder.uri)
       runnerLog.appendLine(`$ ${ runner } run --json${ selection === ScanSelection.STAGED ? ' --staged' : '' }`)
 
       reportResult(await runScan(runner, folder, selection, progress, token))
@@ -170,6 +176,7 @@ export const scanLocally = async (selection: ScanSelection) => {
   )
     .then(undefined, (error: Error) => {
       outputChannel.appendLine(`Local scan failed: ${ error.message }`)
+      finishLocalScan(error.message)
       showStatus('$(warning) scan failed', error.message)
       window.showErrorMessage(`Local scan failed: ${ error.message }`)
     })
