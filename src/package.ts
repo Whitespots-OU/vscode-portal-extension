@@ -15,6 +15,9 @@ export enum CommandName {
   REJECT_FINDING = `${ SETTINGS_KEY }.rejectFinding`,
   REJECT_FINDING_FOREVER = `${ SETTINGS_KEY }.foreverRejectFinding`,
   SETUP = `${ SETTINGS_KEY }.setup`,
+  SCAN_CHANGES = `${ SETTINGS_KEY }.scanChanges`,
+  SCAN_STAGED = `${ SETTINGS_KEY }.scanStaged`,
+  INSTALL_HOOK = `${ SETTINGS_KEY }.installHook`,
 }
 
 export enum ViewName {
@@ -88,6 +91,22 @@ export default {
         command: CommandName.SETUP,
         title: 'Setup',
       },
+      {
+        command: CommandName.SCAN_CHANGES,
+        title: 'Scan changes locally',
+        category: SETTINGS_KEY_CAP,
+        icon: '$(play)',
+      },
+      {
+        command: CommandName.SCAN_STAGED,
+        title: 'Scan staged changes locally',
+        category: SETTINGS_KEY_CAP,
+      },
+      {
+        command: CommandName.INSTALL_HOOK,
+        title: 'Install pre-commit hook',
+        category: SETTINGS_KEY_CAP,
+      },
     ],
     configuration: [
       {
@@ -143,6 +162,12 @@ export default {
               enumDescriptions: severityList,
             },
           },
+          'portal.runner.path': {
+            type: 'string',
+            default: '',
+            description: 'Path to an auditor-cli binary. When empty, the extension downloads the build the portal serves and keeps it in step with the portal.',
+            order: order++,
+          },
         } satisfies SettingsSchema,
       },
     ],
@@ -173,6 +198,11 @@ export default {
         },
         {
           command: CommandName.CHECK_FINDINGS,
+          when: `view == ${  ViewName.FINDINGS }`,
+          group: 'navigation',
+        },
+        {
+          command: CommandName.SCAN_CHANGES,
           when: `view == ${  ViewName.FINDINGS }`,
           group: 'navigation',
         },
